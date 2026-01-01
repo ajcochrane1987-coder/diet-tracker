@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Diet Streak Tracker 2026</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: #ffffff;
+      --accent: #007aff;
+      --accent-soft: rgba(0, 122, 255, 0.08);
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --checked-bg: #007aff;
+      --checked-text: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e0f2fe, #f5f5f7 55%);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+    }
+
+    .app {
+      max-width: 900px;
+      width: 100%;
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header {
+      margin-bottom: 16px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(0, 122, 255, 0.14);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 14px;
+    }
+
+    .stat-card {
+      flex: 1 1 120px;
+      min-width: 130px;
+      background: #f9fafb;
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .stat-caption {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(26px, 1fr));
+      gap: 4px;
+      border-radius: 12px;
+      padding: 10px;
+      background: #f3f4f6;
+      border: 1px solid var(--border);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .day {
+      border: 1px solid var(--border);
+      background: #ffffff;
+      border-radius: 6px;
+      height: 26px;
+      font-size: 0.68rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.08s ease,
+        background 0.08s ease, border-color 0.08s ease, color 0.08s ease;
+      padding: 0;
+      outline: none;
+    }
+
+    .day:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+    }
+
+    .day.checked {
+      background: var(--checked-bg);
+      border-color: var(--checked-bg);
+      color: var(--checked-text);
+      box-shadow: 0 2px 7px rgba(37, 99, 235, 0.45);
+    }
+
+    .day:focus-visible {
+      outline: 2px solid #f59e0b;
+      outline-offset: 1px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: #fff;
+    }
+
+    .legend-swatch.checked {
+      background: var(--checked-bg);
+      border-color: var(--checked-bg);
+    }
+
+    #last-updated {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Toast / messages */
+    #toast {
+      position: fixed;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: rgba(15, 23, 42, 0.96);
+      color: #f9fafb;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.28s ease, opacity 0.28s ease;
+      z-index: 1000;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    #toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    #toast.hot {
+      background: linear-gradient(120deg, #f97316, #ef4444, #ec4899);
+      color: #111827;
+    }
+
+    /* Confetti */
+    .confetti-piece {
+      position: fixed;
+      width: 6px;
+      height: 10px;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 999;
+      animation-name: confetti-fall;
+      animation-timing-function: linear;
+    }
+
+    @keyframes confetti-fall {
+      from {
+        transform: translateY(0) rotate(0deg);
+      }
+      to {
+        transform: translateY(120vh) rotate(360deg);
+      }
+    }
+
+    /* Hot streak glow */
+    @keyframes appGlow {
+      0% {
+        box-shadow: 0 18px 40px rgba(239, 68, 68, 0.2);
+      }
+      50% {
+        box-shadow: 0 18px 60px rgba(239, 68, 68, 0.75);
+      }
+      100% {
+        box-shadow: 0 18px 40px rgba(239, 68, 68, 0.2);
+      }
+    }
+
+    .app.hot-streak {
+      animation: appGlow 1.2s ease-in-out 1;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #020617;
+        --card-bg: #020617;
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+        --border: #1f2937;
+        --accent-soft: rgba(56, 189, 248, 0.16);
+        --checked-bg: #38bdf8;
+        --checked-text: #020617;
+      }
+
+      body {
+        background: radial-gradient(circle at top, #0f172a, #020617 55%);
+      }
+
+      .stat-card {
+        background: #020617;
+      }
+
+      #calendar {
+        background: #020617;
+      }
+
+      .day {
+        background: #020617;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>My Diet Streak – 2026</h1>
+      <p>Tap a day when you followed your diet. It will remember your progress on this device.</p>
+      <div class="meta-row">
+        <span class="pill">One tap a day</span>
+        <span class="pill">Data stored on this device</span>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total days completed</div>
+        <div class="stat-value" id="total-days">0</div>
+        <div class="stat-caption">Out of 365 days in 2026</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Current streak</div>
+        <div class="stat-value" id="current-streak">0</div>
+        <div class="stat-caption">Consecutive days up to today</div>
+      </div>
+    </section>
+
+    <div id="calendar" aria-label="Diet streak calendar for 2026"></div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <span class="legend-swatch"></span>
+        <span>Not completed</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch checked"></span>
+        <span>Completed</span>
+      </div>
+    </div>
+
+    <div id="last-updated">No updates yet.</div>
+  </div>
+
+  <div id="toast" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      const YEAR = 2026;
+      const STORAGE_KEY = "dietTracker-" + YEAR;
+      const calendarEl = document.getElementById("calendar");
+      const totalDaysEl = document.getElementById("total-days");
+      const currentStreakEl = document.getElementById("current-streak");
+      const lastUpdatedEl = document.getElementById("last-updated");
+      const toastEl = document.getElementById("toast");
+      const appEl = document.querySelector(".app");
+
+      let state = loadState();
+
+      buildCalendar();
+      updateStats();
+
+      function buildCalendar() {
+        const start = new Date(YEAR, 0, 1); // Jan 1
+        const end = new Date(YEAR + 1, 0, 1); // Jan 1 next year
+        let current = new Date(start);
+        let dayNumber = 0;
+
+        while (current < end) {
+          dayNumber++;
+          const dateStr = toDateKey(current); // YYYY-MM-DD
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "day";
+          btn.textContent = dayNumber;
+          btn.dataset.date = dateStr;
+          btn.title = formatPrettyDate(current);
+
+          if (state.days[dateStr]) {
+            btn.classList.add("checked");
+          }
+
+          btn.addEventListener("click", () => {
+            const isChecked = btn.classList.toggle("checked");
+            if (isChecked) {
+              state.days[dateStr] = true;
+              saveState();
+              updateStats();
+              lastUpdatedEl.textContent =
+                "Marked as completed: " + formatPrettyDate(new Date(dateStr));
+
+              // Small confetti for every tick
+              launchConfetti(40);
+
+              const clickedDate = new Date(dateStr);
+
+              // Streak celebration starting from the clicked day
+              const streakAtClick = calculateStreakEndingAt(clickedDate);
+              if (
+                streakAtClick >= 5 &&
+                streakAtClick > (state.maxStreakCelebrated || 0)
+              ) {
+                state.maxStreakCelebrated = streakAtClick;
+                saveState();
+                showToast(
+                  "🔥 Awesome! You're on a " +
+                    streakAtClick +
+                    "-day streak – keep going!"
+                );
+              }
+
+              // Perfect week check (Mon–Sun)
+              const weekKey = checkPerfectWeek(clickedDate);
+              if (weekKey && !state.celebratedWeeks[weekKey]) {
+                state.celebratedWeeks[weekKey] = true;
+                saveState();
+                launchConfetti(120);
+                triggerHotStreak();
+                showToast(
+                  "🔥 Perfect week! You're on a hot streak – keep this momentum going!",
+                  true
+                );
+              }
+            } else {
+              delete state.days[dateStr];
+              saveState();
+              updateStats();
+              lastUpdatedEl.textContent =
+                "Marked as not completed: " +
+                formatPrettyDate(new Date(dateStr));
+            }
+          });
+
+          calendarEl.appendChild(btn);
+          current.setDate(current.getDate() + 1);
+        }
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            return { days: {}, celebratedWeeks: {}, maxStreakCelebrated: 0 };
+          }
+          const parsed = JSON.parse(raw);
+          // Backwards-compatible: if old format (plain map), wrap it
+          if (parsed.days || parsed.celebratedWeeks || parsed.maxStreakCelebrated !== undefined) {
+            return {
+              days: parsed.days || {},
+              celebratedWeeks: parsed.celebratedWeeks || {},
+              maxStreakCelebrated: parsed.maxStreakCelebrated || 0,
+            };
+          } else {
+            return {
+              days: parsed || {},
+              celebratedWeeks: {},
+              maxStreakCelebrated: 0,
+            };
+          }
+        } catch (e) {
+          console.warn("Could not load saved data:", e);
+          return { days: {}, celebratedWeeks: {}, maxStreakCelebrated: 0 };
+        }
+      }
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (e) {
+          console.warn("Could not save data:", e);
+        }
+      }
+
+      function updateStats() {
+        const allDates = Object.keys(state.days);
+        const totalCompleted = allDates.length;
+        totalDaysEl.textContent = totalCompleted;
+
+        const streak = calculateCurrentStreak();
+        currentStreakEl.textContent = streak;
+      }
+
+      function calculateCurrentStreak() {
+        const today = new Date();
+        let cursor = new Date(Math.min(today, new Date(YEAR, 11, 31)));
+
+        if (cursor.getFullYear() !== YEAR) {
+          const dates = Object.keys(state.days).sort();
+          if (!dates.length) return 0;
+          cursor = new Date(dates[dates.length - 1]);
+        }
+
+        let streak = 0;
+        while (cursor.getFullYear() === YEAR) {
+          const key = toDateKey(cursor);
+          if (state.days[key]) {
+            streak++;
+            cursor.setDate(cursor.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        return streak;
+      }
+
+      // Streak ending at a specific date (used for 5-day celebration)
+      function calculateStreakEndingAt(date) {
+        const cursor = new Date(date);
+        let streak = 0;
+        while (cursor.getFullYear() === YEAR) {
+          const key = toDateKey(cursor);
+          if (state.days[key]) {
+            streak++;
+            cursor.setDate(cursor.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        return streak;
+      }
+
+      // Check if the calendar week (Mon–Sun) of a given date is perfect
+      function checkPerfectWeek(date) {
+        const d = new Date(date);
+        const day = d.getDay(); // 0=Sun,1=Mon,...
+        const diffToMonday = (day + 6) % 7; // 0 if Monday
+        const monday = new Date(d);
+        monday.setDate(d.getDate() - diffToMonday);
+
+        const weekKey = toDateKey(monday);
+
+        for (let i = 0; i < 7; i++) {
+          const checkDay = new Date(monday);
+          checkDay.setDate(monday.getDate() + i);
+          if (checkDay.getFullYear() !== YEAR) {
+            // Week spills outside of the year – don't consider it
+            return null;
+          }
+          const key = toDateKey(checkDay);
+          if (!state.days[key]) {
+            return null;
+          }
+        }
+
+        return weekKey;
+      }
+
+      function toDateKey(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function formatPrettyDate(d) {
+        return d.toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        });
+      }
+
+      // Simple confetti generator
+      function launchConfetti(count) {
+        const colors = ["#f97316", "#22c55e", "#3b82f6", "#eab308", "#ec4899"];
+
+        for (let i = 0; i < count; i++) {
+          const piece = document.createElement("div");
+          piece.className = "confetti-piece";
+          piece.style.left = Math.random() * 100 + "vw";
+          piece.style.top = "-10vh";
+          piece.style.backgroundColor =
+            colors[Math.floor(Math.random() * colors.length)];
+          piece.style.opacity = 0.7 + Math.random() * 0.3;
+          piece.style.animationDuration = 0.9 + Math.random() * 0.6 + "s";
+          document.body.appendChild(piece);
+
+          setTimeout(() => {
+            piece.remove();
+          }, 2000);
+        }
+      }
+
+      function showToast(message, hot = false) {
+        toastEl.textContent = message;
+        toastEl.classList.remove("hot");
+        if (hot) {
+          toastEl.classList.add("hot");
+        }
+        toastEl.classList.add("show");
+
+        setTimeout(() => {
+          toastEl.classList.remove("show");
+        }, 2600);
+      }
+
+      function triggerHotStreak() {
+        appEl.classList.add("hot-streak");
+        setTimeout(() => {
+          appEl.classList.remove("hot-streak");
+        }, 1400);
+      }
+    })();
+  </script>
+</body>
+</html>
